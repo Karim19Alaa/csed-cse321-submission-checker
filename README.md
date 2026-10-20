@@ -37,11 +37,3 @@ turns a failed run into a verdict. `assignments/_template/checker.py` documents 
 Set `[tests] input_glob = "*"` when test inputs are not `*.in` files. Limits apply to **each** run.
 Only the student's *jar* is ever run; the checker is trusted code. A checker in this repo is readable by students,
 so put thresholds you want secret in the instructor repo's overlay `config.toml` (`[params]`, `[test_overrides.*]`).
-
-## Publishing and versions
-* Students pin `@v1`. Adding an assignment doesn't affect running ones; after merging, move the tag:
-  `git tag -f v1 && git push -f origin v1` (or release `v2` for breaking changes).
-* **This repo is readable by students.** Never commit hidden tests, and don't merge a future assignment's
-  public tests before you want students to see them (keep it on a branch, or in a private fork, until release).
-* Never change an assignment's limits after release without announcing it; the instructor repo's config must match.
-* The repo must be public, or private/internal with Settings -> Actions -> Access = "accessible from repositories in the organization".
