@@ -1,0 +1,18 @@
+[assignment]
+title        = "Smallest Perimeter Triangle"
+java_version = "21"
+
+[limits]
+time_limit_s    = 5.0
+memory_limit_mb = 256
+jvm_overhead_mb = 128
+
+[checker]
+mode         = "numeric"
+tolerance    = 0.001
+format_regex = '^-?\d+\.\d{3}$'
+
+[messages]
+tle = "Your program is too slow. The expected solution is O(n log n); an O(n^2) or O(n^3) approach will time out."
+mle = "Your program used too much memory. Avoid copying arrays at every recursion level and boxed collections for 100,000 points."
+pe  = "Print one number per test case, one per line, with exactly 3 decimals."

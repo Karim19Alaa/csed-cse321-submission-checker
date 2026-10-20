@@ -1,0 +1,34 @@
+name: 'Submission checker'
+description: 'Checks that a <student_id>.jar is well-formed and runs within the limits on an assignment''s public tests.'
+
+inputs:
+  assignment:
+    description: 'Assignment id = a folder under assignments/ (e.g. triangle)'
+    required: true
+  submissions-dir:
+    description: 'Folder in the calling repo that contains exactly one <student_id>.jar'
+    required: false
+    default: 'submissions'
+
+runs:
+  using: composite
+  steps:
+    - name: Read assignment settings
+      id: cfg
+      shell: bash
+      env:
+        ASSIGNMENT: ${{ inputs.assignment }}
+      run: python3 "${{ github.action_path }}/core/check_submission.py" --assignment "$ASSIGNMENT" --print-java-version >> "$GITHUB_OUTPUT"
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ steps.cfg.outputs.java_version }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Check submission
+      shell: bash
+      env:
+        ASSIGNMENT: ${{ inputs.assignment }}
+        SUBMISSIONS_DIR: ${{ inputs.submissions-dir }}
+      run: python "${{ github.action_path }}/core/check_submission.py" --assignment "$ASSIGNMENT" --submissions "$SUBMISSIONS_DIR"

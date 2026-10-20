@@ -1,0 +1,19 @@
+# EXAMPLE assignment (not selectable by students): a program with two modes, "compress" and "decompress",
+# each taking <input path> <output path>. Correctness = decompress(compress(x)) == x.
+[assignment]
+title        = "Example: round-trip"
+java_version = "21"
+
+[limits]
+time_limit_s    = 10.0     # applies to EACH run (compress, decompress) separately
+memory_limit_mb = 256
+
+[tests]
+input_glob = "*"           # every file in tests_public/ is a test input (binary files are fine)
+
+[params]
+target_ratio     = 0.0     # >0: output must be at most this fraction of the input size for full points
+partial_credit   = 0.5     # share of the points still given when the round trip works but the ratio is missed
+
+[messages]
+tle = "A run took too long: check the algorithm's complexity and avoid reading the file byte by byte unbuffered."

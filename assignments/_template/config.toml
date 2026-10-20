@@ -1,0 +1,17 @@
+[assignment]
+title        = "TITLE OF THE ASSIGNMENT"
+java_version = "21"
+
+[tests]
+input_glob = "*.in"       # "*" = every file in tests_public/ (except .out) is a test input
+
+[limits]
+time_limit_s    = 5.0
+memory_limit_mb = 256
+jvm_overhead_mb = 128
+
+[checker]
+mode         = "numeric"
+tolerance    = 0.001
+format_regex = '^-?\d+\.\d{3}$'
+
