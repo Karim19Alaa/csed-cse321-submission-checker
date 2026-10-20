@@ -3,7 +3,7 @@ title        = "Smallest Perimeter Triangle"
 java_version = "21"
 
 [limits]
-time_limit_s    = 5.0
+time_limit_s    = 1
 memory_limit_mb = 256
 jvm_overhead_mb = 128
 
