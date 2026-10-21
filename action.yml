@@ -1,5 +1,5 @@
 name: 'Submission checker'
-description: 'Checks that a <student_id>.jar is well-formed and runs within the limits on an assignment''s public tests.'
+description: 'Checks that a <student_id>.jar is well-formed, contains its source code and runs within the limits on an assignment''s public tests.'
 
 inputs:
   assignment:

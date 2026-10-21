@@ -7,6 +7,9 @@ time_limit_s    = 1
 memory_limit_mb = 256
 jvm_overhead_mb = 128
 
+[submission]
+require_sources = true     # the jar must contain the .java source files
+
 [checker]
 mode         = "numeric"
 tolerance    = 0.001

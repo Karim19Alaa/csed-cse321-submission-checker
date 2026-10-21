@@ -115,9 +115,18 @@ def main() -> int:
         fail("Runnable jar", "FAIL", msg, str(jar))
         return finish(title, rows, failed)
     rows.append(("Runnable jar", "OK", msg))
+    ok, msg, warns = grader.check_sources(jar, cfg)
+    if not ok:
+        fail("Source code", "FAIL", msg, str(jar))
+        return finish(title, rows, failed)
+    if cfg["submission"].get("require_sources"):
+        rows.append(("Source code", "WARN" if warns else "OK", msg + ("; " + "; ".join(warns) if warns else "")))
+        if warns and gh:
+            print(f"::warning title=Source code::{'; '.join(warns)}")
 
     hook = grader.load_hook(adir / "checker.py")
-    for name, inp, exp in grader.discover_tests(adir / "tests_public", cfg):
+    tests = grader.discover_tests(adir / "tests_public", cfg)
+    for name, inp, exp in tests:
         tl, ml = limits_for(cfg, name)
         o = grader.evaluate_test(jar, name, inp, exp, cfg, hook, smoke, tl, ml)
         detail = f"{o.elapsed:.2f}s (limit {tl:g}s per run), peak {o.peak:.0f} MB"

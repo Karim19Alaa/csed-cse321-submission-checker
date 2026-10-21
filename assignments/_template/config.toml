@@ -10,6 +10,11 @@ time_limit_s    = 5.0
 memory_limit_mb = 256
 jvm_overhead_mb = 128
 
+[submission]
+require_sources = false    # true = the jar must contain the student's .java files
+# source_extensions = [".java"]
+# min_source_files  = 1
+
 [checker]
 mode         = "numeric"
 tolerance    = 0.001

@@ -58,6 +58,9 @@ DEFAULT_CONFIG = {
     },
     "submission": {
         "id_pattern": r"^[A-Za-z0-9_\-]+$",
+        "require_sources": False,       # true = the jar must contain the student's source files
+        "source_extensions": [".java"],
+        "min_source_files": 1,
     },
     "tests": {
         "input_glob": "*.in",           # which files in the tests folder are test inputs ("*" = every file except .out)
@@ -125,7 +128,7 @@ class TestResult:
 class SubmissionResult:
     student_id: str
     jar: str
-    status: str = "OK"     # OK, BAD_NAME, BAD_JAR
+    status: str = "OK"     # OK, BAD_NAME, BAD_JAR, NO_SOURCE
     message: str = ""
     score: float = 0.0
     tests: list = field(default_factory=list)
@@ -161,6 +164,44 @@ def validate_jar(jar: Path, cfg: dict) -> tuple[bool, str]:
     if main_cls not in names:
         return False, f"Main-Class '{m.group(1)}' not found inside the jar"
     return True, f"Main-Class = {m.group(1)}"
+
+
+def check_sources(jar: Path, cfg: dict) -> tuple[bool, str, list[str]]:
+    """Is the student's source code inside the jar? Returns (ok, message, warnings)."""
+    sub = cfg["submission"]
+    if not sub.get("require_sources"):
+        return True, "not required", []
+    exts = tuple(e.lower() for e in sub.get("source_extensions", [".java"]))
+    need = int(sub.get("min_source_files", 1))
+    try:
+        with zipfile.ZipFile(jar) as z:
+            srcs = [i for i in z.infolist() if not i.is_dir() and i.filename.lower().endswith(exts)]
+            mf = next((n for n in z.namelist() if n.upper() == "META-INF/MANIFEST.MF"), None)
+            manifest = z.read(mf).decode("utf-8", "replace").replace("\r\n ", "").replace("\n ", "") if mf else ""
+    except zipfile.BadZipFile:
+        return False, "corrupt jar archive", []
+    nonempty = [i for i in srcs if i.file_size > 0]
+    if len(nonempty) < need:
+        what = "empty source files" if srcs else f"no source files ({', '.join(exts)})"
+        return False, (f"{what} found in the jar - include your source code in the jar, "
+                       f"e.g. `jar cfe <id>.jar Main Main.class Main.java`"), []
+    warns = []
+    m = re.search(r"^Main-Class:\s*(\S+)", manifest, re.MULTILINE)
+    if m:
+        simple = m.group(1).split(".")[-1]
+        if not any(Path(i.filename).stem == simple for i in nonempty):
+            warns.append(f"no source file named {simple}{exts[0]} (the Main-Class) was found")
+    return True, f"{len(nonempty)} source file(s): " + ", ".join(sorted(i.filename for i in nonempty)[:6]), warns
+
+
+def warm_up(jar: Path, cfg: dict, tests, hook, smoke=None) -> None:
+    """One UNTIMED run on the smallest test, result ignored. A cold machine (first JVM start, jar and
+    JDK files not yet in the OS cache) makes the first run much slower than later ones; this absorbs that."""
+    lim = cfg["limits"]
+    if not lim.get("warmup", True) or not tests:
+        return
+    name, inp, exp = min(tests, key=lambda t: t[1].stat().st_size)
+    evaluate_test(jar, name, inp, exp, cfg, hook, smoke, float(lim["warmup_time_limit_s"]), int(lim["memory_limit_mb"]))
 
 
 # ----------------------------------------------------------------------------
@@ -436,6 +477,12 @@ def grade_submission(jar: Path, cfg: dict, tests, hook, limits_override: dict) -
     if not ok:
         res.status, res.message = "BAD_JAR", msg
         return res
+    ok, msg, warns = check_sources(jar, cfg)
+    if not ok:
+        res.status, res.message = "NO_SOURCE", msg
+        return res
+    if warns:
+        res.message = "; ".join(warns)
 
     overrides = cfg["test_overrides"]
     weights = {name: float(overrides.get(name, {}).get("weight", 1)) for name, _, _ in tests}
@@ -465,6 +512,8 @@ def print_report(results: list[SubmissionResult]) -> None:
         if r.status != "OK":
             print(f"   {r.status}: {r.message}")
             continue
+        if r.message:
+            print(f"   note: {r.message}")
         for t in r.tests:
             extra = ("  " + " ".join(f"{k}={v}" for k, v in t.metrics.items())) if t.metrics else ""
             extra += f"  {t.message}" if t.message else ""
