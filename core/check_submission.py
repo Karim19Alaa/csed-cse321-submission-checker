@@ -126,6 +126,7 @@ def main() -> int:
 
     hook = grader.load_hook(adir / "checker.py")
     tests = grader.discover_tests(adir / "tests_public", cfg)
+    grader.warm_up(jar, cfg, tests, hook, smoke)       # untimed; absorbs cold-start slowness
     for name, inp, exp in tests:
         tl, ml = limits_for(cfg, name)
         o = grader.evaluate_test(jar, name, inp, exp, cfg, hook, smoke, tl, ml)

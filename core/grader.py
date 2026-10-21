@@ -55,6 +55,8 @@ DEFAULT_CONFIG = {
         "output_limit_mb": 16,          # max bytes the program may write to stdout
         "file_limit_mb": 64,            # max size of any single file the program may create
         "max_jar_mb": 50,
+        "warmup": True,                 # one untimed run on the smallest test before the timed ones
+        "warmup_time_limit_s": 10.0,    # generous limit for that warm-up run (its result is ignored)
     },
     "submission": {
         "id_pattern": r"^[A-Za-z0-9_\-]+$",
@@ -483,6 +485,7 @@ def grade_submission(jar: Path, cfg: dict, tests, hook, limits_override: dict) -
         return res
     if warns:
         res.message = "; ".join(warns)
+    warm_up(jar, cfg, tests, hook)
 
     overrides = cfg["test_overrides"]
     weights = {name: float(overrides.get(name, {}).get("weight", 1)) for name, _, _ in tests}
