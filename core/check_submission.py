@@ -86,6 +86,17 @@ def main() -> int:
             print(f"::error {'file=' + file + ',' if file else ''}title={check}::{detail}")
 
     jar = args.jar
+    if jar is not None:                              # explicit path (a workflow input): must be a file inside the repo
+        root = Path.cwd().resolve()
+        try:
+            resolved = jar.resolve(strict=True)
+        except (FileNotFoundError, OSError):
+            fail("Jar file", "FAIL", f"'{jar}' does not exist - check the path (relative to the repository root)")
+            return finish(title, rows, failed)
+        if not resolved.is_file() or not resolved.is_relative_to(root):
+            fail("Jar file", "FAIL", f"'{jar}' must be a file inside the repository")
+            return finish(title, rows, failed)
+        jar = resolved
     if jar is None:
         jars = sorted(args.submissions.glob("*.jar"))
         if len(jars) != 1:

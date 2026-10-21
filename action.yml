@@ -5,8 +5,12 @@ inputs:
   assignment:
     description: 'Assignment id = a folder under assignments/ (e.g. triangle)'
     required: true
+  jar-path:
+    description: 'Path of the jar to check, relative to the repository root (e.g. submissions/20240001.jar). Leave empty to use the single jar found in submissions-dir.'
+    required: false
+    default: ''
   submissions-dir:
-    description: 'Folder in the calling repo that contains exactly one <student_id>.jar'
+    description: 'Used only when jar-path is empty: folder that contains exactly one <student_id>.jar'
     required: false
     default: 'submissions'
 
@@ -28,7 +32,11 @@ runs:
         python-version: '3.12'
     - name: Check submission
       shell: bash
-      env:
+      env:                       # user-supplied values go through env vars, never straight into the script
         ASSIGNMENT: ${{ inputs.assignment }}
+        JAR_PATH: ${{ inputs.jar-path }}
         SUBMISSIONS_DIR: ${{ inputs.submissions-dir }}
-      run: python "${{ github.action_path }}/core/check_submission.py" --assignment "$ASSIGNMENT" --submissions "$SUBMISSIONS_DIR"
+      run: |
+        args=(--assignment "$ASSIGNMENT")
+        if [ -n "$JAR_PATH" ]; then args+=(--jar "$JAR_PATH"); else args+=(--submissions "$SUBMISSIONS_DIR"); fi
+        python "${{ github.action_path }}/core/check_submission.py" "${args[@]}"
